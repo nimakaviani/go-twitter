@@ -1,5 +1,32 @@
 package twitter
 
+type DataV2 struct {
+	AuthorId string `json:"author_id"`
+	Id       string `json:"id"`
+	Text     string `jason:"text"`
+}
+
+type UserV2 struct {
+	Id       string `json:"id"`
+	Name     string `json:"name"`
+	Username string `json:"username"`
+}
+
+type IncludeV2 struct {
+	Users []UserV2
+}
+
+type MatchingRuleV2 struct {
+	Id  string `json:"id"`
+	Tag string `json:"tag"`
+}
+
+type TweetV2 struct {
+	Data          *DataV2         `json:"data"`
+	Includes      *IncludeV2      `json:"includes"`
+	MatchingRules *MatchingRuleV2 `json:"matching_rules"`
+}
+
 // StatusDeletion indicates that a given Tweet has been deleted.
 // https://dev.twitter.com/streaming/overview/messages-types#status_deletion_notices_delete
 type StatusDeletion struct {

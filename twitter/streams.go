@@ -16,24 +16,27 @@ const (
 	publicStream = "https://stream.twitter.com/1.1/"
 	userStream   = "https://userstream.twitter.com/1.1/"
 	siteStream   = "https://sitestream.twitter.com/1.1/"
+	v2Stream     = "https://api.twitter.com/2/"
 )
 
 // StreamService provides methods for accessing the Twitter Streaming API.
 type StreamService struct {
-	client *http.Client
-	public *sling.Sling
-	user   *sling.Sling
-	site   *sling.Sling
+	client   *http.Client
+	public   *sling.Sling
+	user     *sling.Sling
+	site     *sling.Sling
+	v2stream *sling.Sling
 }
 
 // newStreamService returns a new StreamService.
 func newStreamService(client *http.Client, sling *sling.Sling) *StreamService {
 	sling.Set("User-Agent", userAgent)
 	return &StreamService{
-		client: client,
-		public: sling.New().Base(publicStream).Path("statuses/"),
-		user:   sling.New().Base(userStream),
-		site:   sling.New().Base(siteStream),
+		client:   client,
+		public:   sling.New().Base(publicStream).Path("statuses/"),
+		user:     sling.New().Base(userStream),
+		site:     sling.New().Base(siteStream),
+		v2stream: sling.New().Base(v2Stream).Path("tweets/search/stream"),
 	}
 }
 
@@ -109,6 +112,23 @@ type StreamSiteParams struct {
 // https://dev.twitter.com/streaming/reference/get/site
 func (srv *StreamService) Site(params *StreamSiteParams) (*Stream, error) {
 	req, err := srv.site.New().Get("site.json").QueryStruct(params).Request()
+	if err != nil {
+		return nil, err
+	}
+	return newStream(srv.client, req), nil
+}
+
+type V2StreamFilterParams struct {
+	Expansions  []string `url:"expansions,omitempty,comma"`
+	MediaFields []string `url:"media.fields,omitempty,comma"`
+	PollFields  []string `url:"poll.fields,omitempty,comma"`
+	PlaceFields []string `url:"place.fields,omitempty,comma"`
+	UserFields  []string `url:"user.fields,omitempty,comma"`
+	TweetFields []string `url:"tweet.fields,omitempty,comma"`
+}
+
+func (srv *StreamService) V2Stream(params *V2StreamFilterParams) (*Stream, error) {
+	req, err := srv.v2stream.New().Get("").QueryStruct(params).Request()
 	if err != nil {
 		return nil, err
 	}
@@ -267,7 +287,11 @@ func getMessage(token []byte) interface{} {
 // Returns the message struct or the data map if the message type could not be
 // determined.
 func decodeMessage(token []byte, data map[string]interface{}) interface{} {
-	if hasPath(data, "retweet_count") {
+	if hasPath(data, "matching_rules") {
+		tweet := new(TweetV2)
+		json.Unmarshal(token, tweet)
+		return tweet
+	} else if hasPath(data, "retweet_count") {
 		tweet := new(Tweet)
 		json.Unmarshal(token, tweet)
 		return tweet

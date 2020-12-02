@@ -13,6 +13,7 @@ type Demux interface {
 type SwitchDemux struct {
 	All              func(message interface{})
 	Tweet            func(tweet *Tweet)
+	TweetV2          func(tweet *TweetV2)
 	DM               func(dm *DirectMessage)
 	StatusDeletion   func(deletion *StatusDeletion)
 	LocationDeletion func(LocationDeletion *LocationDeletion)
@@ -31,6 +32,7 @@ func NewSwitchDemux() SwitchDemux {
 	return SwitchDemux{
 		All:              func(message interface{}) {},
 		Tweet:            func(tweet *Tweet) {},
+		TweetV2:          func(tweet *TweetV2) {},
 		DM:               func(dm *DirectMessage) {},
 		StatusDeletion:   func(deletion *StatusDeletion) {},
 		LocationDeletion: func(LocationDeletion *LocationDeletion) {},
@@ -53,6 +55,8 @@ func (d SwitchDemux) Handle(message interface{}) {
 	switch msg := message.(type) {
 	case *Tweet:
 		d.Tweet(msg)
+	case *TweetV2:
+		d.TweetV2(msg)
 	case *DirectMessage:
 		d.DM(msg)
 	case *StatusDeletion:
