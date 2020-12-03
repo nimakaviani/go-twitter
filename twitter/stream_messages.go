@@ -4,6 +4,7 @@ type DataV2 struct {
 	AuthorId string `json:"author_id"`
 	Id       string `json:"id"`
 	Text     string `jason:"text"`
+	Lang     string `jason:"lang"`
 }
 
 type UserV2 struct {
